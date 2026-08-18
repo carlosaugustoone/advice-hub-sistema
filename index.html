@@ -230,6 +230,17 @@
 </style>
 </head>
 <body>
+<div id="loginScreen" style="display:none; min-height:100vh; align-items:center; justify-content:center; padding:20px;">
+  <div class="modal" style="max-width:360px;">
+    <div class="eyebrow">Advice Group · Gestão de Projeto</div>
+    <h2>Sistema Advice HUB</h2>
+    <div class="msub">Entre com seu e-mail e senha para acessar.</div>
+    <div class="field"><label>E-mail</label><input id="loginEmail" type="email" autocomplete="username"></div>
+    <div class="field"><label>Senha</label><input id="loginPassword" type="password" autocomplete="current-password"></div>
+    <div id="loginError" style="display:none; color:var(--danger); font-size:11.5px; margin:-4px 0 12px;"></div>
+    <button class="btn" id="btnLogin" style="width:100%;">Entrar</button>
+  </div>
+</div>
 <div class="app" id="app" style="display:none;">
   <div class="topbar">
     <div>
@@ -245,6 +256,10 @@
       <button class="tab" data-view="arquitetura">Arquitetura</button>
       <button class="tab" data-view="tarefas">Tarefas</button>
       <button class="tab" data-view="sprints">Sprints</button>
+    </div>
+    <div style="display:flex; align-items:center; gap:8px;">
+      <span id="userEmailLabel" style="font-size:11.5px; color:var(--text-dim);"></span>
+      <button class="btn btn-ghost btn-sm" id="btnLogout">Sair</button>
     </div>
   </div>
 
@@ -463,11 +478,15 @@
 
 <div class="toast" id="toast"></div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 /* ============================================================
    CONSTANTES
 ============================================================ */
-const STORAGE_KEY = 'advice-hub-sistema-v1';
+const SUPABASE_URL = 'https://cplmfgjvjpuiduwrhzjy.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNwbG1mZ2p2anB1aWR1d3Joemp5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcwNzc0NTEsImV4cCI6MjEwMjY1MzQ1MX0.fbMiOKp6ZeTRPlFsojJK1Dlf5pwEXuwrThfqpMIS8zU';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const STATE_ROW_ID = 'advice-hub';
 const ETAPAS = ["Backlog", "Desenvolvimento | Doing", "Testes | Code Review", "Homologação | Staging", "Em Produção"];
 const ETAPA_CLASSE = { "Backlog":"backlog", "Desenvolvimento | Doing":"dev", "Testes | Code Review":"teste", "Homologação | Staging":"homolog", "Em Produção":"deploy" };
 const DEFAULT_RESPONSAVEIS = ["Elde","Guga","Augusto","Tomás","Rômulo"];
@@ -672,17 +691,26 @@ let ARCH_OPEN = {}; // eixoId -> bool
 async function loadState() {
   let loaded = null;
   try {
-    const res = await window.storage.get(STORAGE_KEY, true);
-    if (res && res.value) loaded = JSON.parse(res.value);
-  } catch(e) {}
+    const { data, error } = await sb.from('app_state').select('data').eq('id', STATE_ROW_ID).maybeSingle();
+    if (error) throw error;
+    if (data && data.data) loaded = data.data;
+  } catch(e) { console.error('Falha ao carregar do Supabase', e); }
   if (!loaded) loaded = seedState();
   const { state, changed } = runMigrations(loaded);
   STATE = state;
   if (changed) await saveState();
 }
 async function saveState() {
-  try { await window.storage.set(STORAGE_KEY, JSON.stringify(STATE), true); }
-  catch(e) { console.error('Falha ao salvar', e); showToast('Erro ao salvar — tente novamente'); }
+  try {
+    const { data: userData } = await sb.auth.getUser();
+    const { error } = await sb.from('app_state').upsert({
+      id: STATE_ROW_ID,
+      data: STATE,
+      updated_at: new Date().toISOString(),
+      updated_by: userData?.user?.email || null
+    });
+    if (error) throw error;
+  } catch(e) { console.error('Falha ao salvar', e); showToast('Erro ao salvar — tente novamente'); }
 }
 
 function showToast(msg) {
@@ -1377,11 +1405,54 @@ function renderAll(){
   renderSprints();
 }
 
-(async function init(){
+/* ============================================================
+   AUTENTICAÇÃO
+============================================================ */
+function showLogin(msg){
+  document.getElementById('loadingMsg').style.display = 'none';
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'flex';
+  const err = document.getElementById('loginError');
+  if (msg) { err.textContent = msg; err.style.display = 'block'; }
+  else { err.style.display = 'none'; }
+}
+
+async function startApp(){
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('loadingMsg').style.display = 'block';
   await loadState();
+  const { data: userData } = await sb.auth.getUser();
+  const label = document.getElementById('userEmailLabel');
+  if (label) label.textContent = userData?.user?.email || '';
   document.getElementById('loadingMsg').style.display = 'none';
   document.getElementById('app').style.display = 'block';
   renderAll();
+}
+
+async function doLogin(){
+  const email = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  if (!email || !password) { showLogin('Preencha e-mail e senha.'); return; }
+  const btn = document.getElementById('btnLogin');
+  btn.disabled = true; btn.textContent = 'Entrando…';
+  const { error } = await sb.auth.signInWithPassword({ email, password });
+  btn.disabled = false; btn.textContent = 'Entrar';
+  if (error) { showLogin('E-mail ou senha inválidos.'); return; }
+  startApp();
+}
+
+document.getElementById('btnLogin').addEventListener('click', doLogin);
+document.getElementById('loginPassword').addEventListener('keydown', (e) => { if (e.key === 'Enter') doLogin(); });
+document.getElementById('loginEmail').addEventListener('keydown', (e) => { if (e.key === 'Enter') doLogin(); });
+document.getElementById('btnLogout').addEventListener('click', async () => {
+  await sb.auth.signOut();
+  location.reload();
+});
+
+(async function init(){
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) { await startApp(); }
+  else { showLogin(); }
 })();
 </script>
 </body>
