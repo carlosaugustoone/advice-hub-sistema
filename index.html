@@ -1,0 +1,1388 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sistema Advice HUB — Gestão de Projeto</title>
+<style>
+  :root {
+    --bg: #10141a;
+    --panel: #171d26;
+    --panel-2: #1e2631;
+    --panel-3: #252f3d;
+    --line: #2a3644;
+    --text: #e8edf3;
+    --text-dim: #8b98a9;
+    --text-faint: #5c6b7d;
+    --accent: #3ecf8e;
+    --accent-soft: rgba(62,207,142,.14);
+    --blue: #4f9ded;
+    --blue-soft: rgba(79,157,237,.14);
+    --warn: #e0a94a;
+    --warn-soft: rgba(224,169,74,.14);
+    --danger: #e0654a;
+    --danger-soft: rgba(224,101,74,.14);
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif;
+  }
+  ::selection { background: var(--accent-soft); }
+  .app { max-width: 1280px; margin: 0 auto; padding: 22px 18px 70px; }
+
+  /* Header */
+  .topbar {
+    display: flex; justify-content: space-between; align-items: flex-end;
+    flex-wrap: wrap; gap: 14px; margin-bottom: 18px;
+  }
+  .eyebrow {
+    font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--accent); font-weight: 700; margin-bottom: 5px;
+  }
+  h1 { margin: 0; font-size: 21px; font-weight: 650; letter-spacing: -0.01em; }
+  .sub { color: var(--text-dim); font-size: 12.5px; margin-top: 3px; }
+
+  .tabs { display: flex; gap: 4px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 4px; }
+  .tab {
+    padding: 8px 14px; border-radius: 7px; font-size: 12.5px; font-weight: 600;
+    color: var(--text-dim); cursor: pointer; border: none; background: none;
+    transition: all .15s ease; white-space: nowrap;
+  }
+  .tab:hover { color: var(--text); }
+  .tab.active { background: var(--accent); color: #08150f; }
+
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* Cards */
+  .card {
+    background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 16px;
+  }
+  .grid { display: grid; gap: 12px; }
+  .grid-5 { grid-template-columns: repeat(5, 1fr); }
+  .grid-4 { grid-template-columns: repeat(4, 1fr); }
+  .grid-3 { grid-template-columns: repeat(3, 1fr); }
+  .grid-2 { grid-template-columns: repeat(2, 1fr); }
+  @media (max-width: 1000px) {
+    .grid-5 { grid-template-columns: repeat(3, 1fr); }
+  }
+  @media (max-width: 900px) {
+    .grid-4 { grid-template-columns: repeat(2, 1fr); }
+    .grid-3 { grid-template-columns: 1fr; }
+    .grid-2 { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 640px) {
+    .grid-5 { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  .kpi-label { font-size: 10.5px; text-transform: uppercase; letter-spacing: .05em; color: var(--text-dim); font-weight: 600; margin-bottom: 6px; }
+  .kpi-value { font-size: 26px; font-weight: 700; letter-spacing: -0.01em; }
+  .kpi-sub { font-size: 11.5px; color: var(--text-faint); margin-top: 4px; }
+  .kpi-value.warn { color: var(--warn); }
+  .kpi-value.danger { color: var(--danger); }
+  .kpi-value.accent { color: var(--accent); }
+
+  .section-title {
+    font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em;
+    color: var(--text-dim); margin: 26px 0 10px;
+  }
+  .section-title:first-child { margin-top: 0; }
+
+  /* Eixo progress cards */
+  .eixo-card { display: flex; flex-direction: column; gap: 10px; }
+  .eixo-head { display: flex; justify-content: space-between; align-items: center; }
+  .eixo-name { font-size: 14.5px; font-weight: 700; }
+  .badge {
+    font-size: 10px; font-weight: 700; padding: 3px 9px; border-radius: 20px; text-transform: uppercase; letter-spacing: .03em;
+  }
+  .badge.ok { background: var(--accent-soft); color: var(--accent); }
+  .badge.risco { background: var(--warn-soft); color: var(--warn); }
+  .badge.estourado { background: var(--danger-soft); color: var(--danger); }
+  .badge.indef { background: var(--panel-3); color: var(--text-dim); }
+
+  .progress-bar { height: 8px; background: var(--panel-3); border-radius: 20px; overflow: hidden; }
+  .progress-fill { height: 100%; background: var(--accent); border-radius: 20px; transition: width .3s ease; }
+  .progress-fill.warn { background: var(--warn); }
+  .progress-fill.danger { background: var(--danger); }
+
+  .meta-row { display: flex; justify-content: space-between; font-size: 11.5px; color: var(--text-dim); }
+  .meta-stack { display: flex; flex-direction: column; gap: 3px; font-size: 11.5px; color: var(--text-dim); }
+  .meta-stack .row { display: flex; justify-content: space-between; }
+
+  /* Bar charts (css-only) */
+  .barchart { display: flex; flex-direction: column; gap: 8px; }
+  .barrow { display: grid; grid-template-columns: 120px 1fr 34px; align-items: center; gap: 10px; }
+  .barrow.wide { grid-template-columns: 200px 1fr 40px; }
+  .barrow .label { font-size: 12px; color: var(--text-dim); text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .barrow.wide .label { white-space: normal; line-height: 1.25; }
+  .barrow .track { height: 16px; background: var(--panel-3); border-radius: 5px; overflow: hidden; }
+  .barrow .fill { height: 100%; background: var(--blue); border-radius: 5px; transition: width .3s ease; }
+  .barrow .fill.hot { background: var(--danger); }
+  .barrow .n { font-size: 11.5px; color: var(--text-faint); white-space: nowrap; }
+  .chart-caption { font-size: 11px; color: var(--text-faint); margin: -4px 0 10px 2px; }
+
+  /* Exceptions list */
+  .exc-list { display: flex; flex-direction: column; gap: 8px; }
+  .exc-item {
+    display: flex; justify-content: space-between; align-items: center; gap: 10px;
+    padding: 10px 12px; background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; font-size: 12.5px;
+  }
+  .exc-item .t { color: var(--text); font-weight: 500; }
+  .exc-item .m { color: var(--text-faint); font-size: 11px; margin-top: 2px; }
+  .exc-empty { color: var(--text-faint); font-size: 12.5px; text-align: center; padding: 22px; border: 1px dashed var(--line); border-radius: 8px; }
+
+  /* Buttons */
+  .btn {
+    background: var(--accent); color: #08150f; border: none; padding: 9px 15px;
+    border-radius: 8px; font-size: 12.5px; font-weight: 700; cursor: pointer;
+    transition: transform .12s ease, opacity .12s ease;
+  }
+  .btn:hover { opacity: .9; transform: translateY(-1px); }
+  .btn-ghost { background: transparent; color: var(--text-dim); border: 1px solid var(--line); }
+  .btn-ghost:hover { color: var(--text); border-color: var(--text-dim); }
+  .btn-sm { padding: 5px 10px; font-size: 11.5px; }
+  .btn-danger { background: var(--danger-soft); color: var(--danger); border: none; }
+
+  /* Arquitetura tab */
+  .arch-toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px; }
+  .arch-group { margin-bottom: 22px; }
+  .arch-eixo-header {
+    display: flex; justify-content: space-between; align-items: center; padding: 10px 4px; cursor: pointer;
+  }
+  .arch-eixo-header .name { font-size: 15px; font-weight: 700; }
+  .chev { color: var(--text-faint); transition: transform .15s ease; font-size: 11px; }
+  .chev.open { transform: rotate(90deg); }
+
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  #tasksTable { table-layout: fixed; }
+  th { text-align: left; padding: 8px 10px; color: var(--text-dim); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: .03em; border-bottom: 1px solid var(--line); }
+  td { padding: 9px 10px; border-bottom: 1px solid var(--line); vertical-align: middle; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #tasksTable td.wrap, #tasksTable th.wrap { white-space: normal; }
+  tr:last-child td { border-bottom: none; }
+  .tbl-name { font-weight: 600; }
+  .cell-ellipsis { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
+  .tbl-actions { display: flex; gap: 6px; justify-content: flex-end; }
+  .icon-btn { background: none; border: none; color: var(--text-faint); cursor: pointer; font-size: 13px; padding: 3px 6px; border-radius: 5px; flex-shrink: 0; height: 28px; display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; vertical-align: middle; }
+  .icon-btn:hover { color: var(--text); background: var(--panel-3); }
+
+  .pill { font-size: 10.5px; font-weight: 700; padding: 2px 8px; border-radius: 20px; }
+  .pill.ok { background: var(--accent-soft); color: var(--accent); }
+  .pill.invalido { background: var(--danger-soft); color: var(--danger); }
+  .pill.semdata { background: var(--panel-3); color: var(--text-dim); }
+
+  /* Tarefas tab */
+  .filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+  .filters select, .filters input {
+    background: var(--panel-2); border: 1px solid var(--line); color: var(--text);
+    border-radius: 7px; padding: 7px 10px; font-size: 12px; font-family: inherit;
+  }
+  .task-etapa-badge {
+    font-size: 10.5px; font-weight: 700; padding: 3px 9px; border-radius: 20px; white-space: nowrap;
+  }
+  .task-etapa-select {
+    font-size: 11px; font-weight: 700; padding: 5px 8px; border-radius: 7px; border: 1px solid var(--line);
+    font-family: inherit; cursor: pointer; width: 100%; height: 28px; box-sizing: border-box; vertical-align: middle;
+  }
+  .task-etapa-select.backlog, .task-etapa-badge.backlog { background: var(--panel-3); color: var(--text-dim); }
+  .task-etapa-select.dev, .task-etapa-badge.dev { background: var(--blue-soft); color: var(--blue); }
+  .task-etapa-select.teste, .task-etapa-badge.teste { background: var(--warn-soft); color: var(--warn); }
+  .task-etapa-select.homolog, .task-etapa-badge.homolog { background: rgba(160,120,240,.14); color: #a078f0; }
+  .task-etapa-select.deploy, .task-etapa-badge.deploy { background: var(--accent-soft); color: var(--accent); }
+  .task-etapa-select option { background: var(--panel-2); color: var(--text); }
+  .data-cell { display: flex; align-items: center; gap: 5px; white-space: nowrap; }
+  .atraso-dot { color: var(--danger); flex-shrink: 0; }
+  .prior-alta { color: var(--danger); font-weight: 700; }
+  .prior-media { color: var(--warn); font-weight: 600; }
+  .prior-baixa { color: var(--text-faint); }
+  .row-atrasada { background: rgba(224,101,74,.06); }
+  .row-sem-comp { box-shadow: inset 3px 0 0 var(--warn); }
+
+  /* Modal */
+  .overlay { position: fixed; inset: 0; background: rgba(6,9,13,.7); display: none; align-items: flex-start; justify-content: center; z-index: 60; padding: 40px 16px; overflow-y: auto; }
+  .overlay.open { display: flex; }
+  .modal { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 22px; width: 100%; max-width: 480px; }
+  .modal h2 { margin: 0 0 4px; font-size: 16px; }
+  .modal .msub { color: var(--text-dim); font-size: 11.5px; margin-bottom: 16px; }
+  .field { margin-bottom: 12px; }
+  .field label { display: block; font-size: 10.5px; color: var(--text-dim); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 5px; font-weight: 700; }
+  .field input, .field select, .field textarea {
+    width: 100%; background: var(--panel-2); border: 1px solid var(--line); color: var(--text);
+    border-radius: 7px; padding: 9px 10px; font-size: 13px; font-family: inherit;
+  }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; }
+
+  .empty-hint { color: var(--text-faint); font-size: 12px; text-align: center; padding: 30px; }
+  .loading { color: var(--text-dim); font-size: 13px; padding: 60px; text-align: center; }
+  .toast {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+    background: var(--panel-3); border: 1px solid var(--line); color: var(--text);
+    padding: 10px 18px; border-radius: 8px; font-size: 12.5px; z-index: 100;
+    opacity: 0; pointer-events: none; transition: opacity .2s ease;
+  }
+  .toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+<div class="app" id="app" style="display:none;">
+  <div class="topbar">
+    <div>
+      <div class="eyebrow">Advice Group · Gestão de Projeto</div>
+      <div style="display:flex; align-items:center; gap:6px;">
+        <h1 id="projTitle">Sistema Advice HUB</h1>
+        <button class="icon-btn" id="btnEditProjeto" title="Editar projeto">✎</button>
+      </div>
+      <div class="sub" id="headerSub">Eixo → Módulo → Componente → Tarefa</div>
+    </div>
+    <div class="tabs">
+      <button class="tab active" data-view="dashboard">Dashboard</button>
+      <button class="tab" data-view="arquitetura">Arquitetura</button>
+      <button class="tab" data-view="tarefas">Tarefas</button>
+      <button class="tab" data-view="sprints">Sprints</button>
+    </div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div class="view active" id="view-dashboard">
+    <div class="grid grid-5" id="topKpis"></div>
+
+    <div class="section-title">Progresso por Eixo</div>
+    <div class="grid grid-3" id="eixoCards"></div>
+
+    <div class="section-title">Funil por Etapa</div>
+    <div class="chart-caption">Quantidade de tarefas por etapa</div>
+    <div class="card"><div class="barchart" id="funilChart"></div></div>
+
+    <div class="grid grid-2" style="margin-top:22px;">
+      <div>
+        <div class="section-title" style="margin-top:0;">Carga por Sprint (próximas)</div>
+        <div class="chart-caption">Quantidade de tarefas por sprint · <span style="color:var(--blue);">●</span> normal &nbsp; <span style="color:var(--danger);">●</span> sprint sobrecarregada (5+ tarefas)</div>
+        <div class="card"><div class="barchart" id="sprintChart"></div></div>
+      </div>
+      <div>
+        <div class="section-title" style="margin-top:0;">Carga por Responsável</div>
+        <div class="chart-caption">Quantidade de tarefas por responsável</div>
+        <div class="card"><div class="barchart" id="respChart"></div></div>
+      </div>
+    </div>
+
+    <div class="section-title">Exceções — o que precisa de atenção</div>
+    <div class="grid grid-2">
+      <div style="display:flex; flex-direction:column; gap:18px;">
+        <div>
+          <div class="kpi-label" style="margin-bottom:8px;">Tarefas atrasadas</div>
+          <div class="exc-list" id="excAtrasadas"></div>
+        </div>
+        <div>
+          <div class="kpi-label" style="margin-bottom:8px;">Prioridade Alta parada no Backlog</div>
+          <div class="exc-list" id="excPrioridadeAlta"></div>
+        </div>
+      </div>
+      <div>
+        <div class="kpi-label" style="margin-bottom:8px;">Tarefas fora do padrão (mais de 5 dias programados)</div>
+        <div class="exc-list" id="excForaPadrao"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ARQUITETURA -->
+  <div class="view" id="view-arquitetura">
+    <div class="arch-toolbar">
+      <div class="sub">Eixo → Módulo → Componente. Prazos de Eixo e Módulo são metas definidas por vocês; o prazo do Componente é calculado automaticamente a partir das Tarefas dentro dele.</div>
+      <div style="display:flex; gap:8px;">
+        <button class="btn btn-ghost btn-sm" id="btnAddEixo">+ Eixo</button>
+        <button class="btn btn-ghost btn-sm" id="btnAddModulo">+ Módulo</button>
+        <button class="btn btn-sm" id="btnAddComponente">+ Componente</button>
+      </div>
+    </div>
+    <div id="archTree"></div>
+  </div>
+
+  <!-- TAREFAS -->
+  <div class="view" id="view-tarefas">
+    <div class="arch-toolbar">
+      <div class="filters" id="taskFilters"></div>
+      <div style="display:flex; gap:8px;">
+        <button class="btn btn-ghost" id="btnManageResp">Responsáveis</button>
+        <button class="btn" id="btnAddTarefa">+ Nova tarefa</button>
+      </div>
+    </div>
+    <div class="card" style="overflow-x:auto;">
+      <table id="tasksTable">
+        <colgroup>
+          <col style="width:19%"><col style="width:14%"><col style="width:9%">
+          <col style="width:8%"><col style="width:9%"><col style="width:6%">
+          <col style="width:9%"><col style="width:15%"><col style="width:7%"><col style="width:4%">
+        </colgroup>
+        <thead>
+          <tr>
+            <th>Tarefa</th><th>Componente</th><th>Responsável</th><th>Início</th><th>Entrega</th>
+            <th>Dias</th><th>Sprint</th><th>Etapa</th><th>Prioridade</th><th></th>
+          </tr>
+        </thead>
+        <tbody id="tasksBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- SPRINTS -->
+  <div class="view" id="view-sprints">
+    <div class="arch-toolbar">
+      <div class="sub">Calendário de reuniões/sprints. Se uma reunião mudar de data, ajuste aqui — todas as Tarefas ligadas àquela sprint se atualizam sozinhas.</div>
+      <button class="btn btn-sm" id="btnAddSprint">+ Adicionar próxima Sprint</button>
+    </div>
+    <div class="card" style="overflow-x:auto; max-height:70vh; overflow-y:auto;">
+      <table>
+        <colgroup><col style="width:16%"><col style="width:26%"><col style="width:40%"><col style="width:8%"></colgroup>
+        <thead><tr><th>Sprint</th><th>Data da reunião</th><th>Tarefas com entrega nesta sprint</th><th></th></tr></thead>
+        <tbody id="sprintsBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<div class="loading" id="loadingMsg">Carregando o Sistema Advice HUB…</div>
+
+<!-- MODALS -->
+<div class="overlay" id="overlayEixo">
+  <div class="modal">
+    <h2 id="eixoModalTitle">Novo Eixo</h2>
+    <div class="msub">Nível mais alto da arquitetura. Ex: Gestão, Operação, Cliente.</div>
+    <div class="field"><label>Nome</label><input id="f-eixo-nome" type="text"></div>
+    <div class="row2">
+      <div class="field"><label>Início (meta)</label><input id="f-eixo-inicio" type="date"></div>
+      <div class="field"><label>Entrega (meta)</label><input id="f-eixo-entrega" type="date"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-danger btn" id="f-eixo-del" style="display:none;">Excluir</button>
+      <button class="btn btn-ghost" id="f-eixo-cancel">Cancelar</button>
+      <button class="btn" id="f-eixo-save">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="overlayModulo">
+  <div class="modal">
+    <h2 id="moduloModalTitle">Novo Módulo</h2>
+    <div class="msub">Prazo não pode ultrapassar a meta do Eixo.</div>
+    <div class="field"><label>Nome</label><input id="f-modulo-nome" type="text"></div>
+    <div class="field"><label>Eixo</label><select id="f-modulo-eixo"></select></div>
+    <div class="row2">
+      <div class="field"><label>Início (meta)</label><input id="f-modulo-inicio" type="date"></div>
+      <div class="field"><label>Entrega (meta)</label><input id="f-modulo-entrega" type="date"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-danger btn" id="f-modulo-del" style="display:none;">Excluir</button>
+      <button class="btn btn-ghost" id="f-modulo-cancel">Cancelar</button>
+      <button class="btn" id="f-modulo-save">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="overlayComponente">
+  <div class="modal">
+    <h2 id="componenteModalTitle">Novo Componente</h2>
+    <div class="msub">O prazo deste Componente é calculado automaticamente pelas Tarefas vinculadas a ele — ou, se tiver Subitens, pelos Subitens. Não se define aqui.</div>
+    <div class="field"><label>Nome</label><input id="f-componente-nome" type="text"></div>
+    <div class="field"><label>Módulo</label><select id="f-componente-modulo"></select></div>
+    <div class="field"><label>Componente Pai (opcional — use para subitens)</label><select id="f-componente-pai"></select></div>
+    <div class="modal-actions">
+      <button class="btn-danger btn" id="f-componente-del" style="display:none;">Excluir</button>
+      <button class="btn btn-ghost" id="f-componente-cancel">Cancelar</button>
+      <button class="btn" id="f-componente-save">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="overlayTarefa">
+  <div class="modal">
+    <h2 id="tarefaModalTitle">Nova Tarefa</h2>
+    <div class="msub">O Status, o Eixo/Módulo e a Sprint são calculados automaticamente.</div>
+    <div class="field"><label>Título</label><input id="f-tarefa-titulo" type="text"></div>
+    <div class="field"><label>Componente</label><select id="f-tarefa-componente"></select></div>
+    <div class="row2">
+      <div class="field"><label>Início</label><input id="f-tarefa-inicio" type="date"></div>
+      <div class="field"><label>Entrega (sprint)</label><select id="f-tarefa-entrega"></select></div>
+    </div>
+    <div id="f-tarefa-dias-aviso" style="display:none; background:var(--warn-soft); color:var(--warn); padding:9px 12px; border-radius:8px; font-size:12px; margin:-4px 0 12px; font-weight:600;"></div>
+    <div class="row2">
+      <div class="field"><label>Responsável</label>
+        <select id="f-tarefa-responsavel"></select>
+      </div>
+      <div class="field"><label>Prioridade</label>
+        <select id="f-tarefa-prioridade"><option>Alta</option><option selected>Média</option><option>Baixa</option></select>
+      </div>
+    </div>
+    <div class="field"><label>Etapa</label>
+      <select id="f-tarefa-etapa">
+        <option>Backlog</option>
+        <option>Desenvolvimento | Doing</option>
+        <option>Testes | Code Review</option>
+        <option>Homologação | Staging</option>
+        <option>Implantação | Deploy</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-danger btn" id="f-tarefa-del" style="display:none;">Excluir</button>
+      <button class="btn btn-ghost" id="f-tarefa-cancel">Cancelar</button>
+      <button class="btn" id="f-tarefa-save">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="overlayProjeto">
+  <div class="modal">
+    <h2>Editar Projeto</h2>
+    <div class="msub">O prazo do Projeto é o teto de tudo — nenhum Eixo pode ter meta de entrega depois dele.</div>
+    <div class="field"><label>Nome do Projeto</label><input id="f-projeto-nome" type="text"></div>
+    <div class="field"><label>Prazo de Entrega (validado e aprovado pelos usuários)</label><input id="f-projeto-prazo" type="date"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="f-projeto-cancel">Cancelar</button>
+      <button class="btn" id="f-projeto-save">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="overlayResp">
+  <div class="modal">
+    <h2>Responsáveis</h2>
+    <div class="msub">Quem pode ser vinculado a uma Tarefa.</div>
+    <div id="respList" style="display:flex; flex-direction:column; gap:8px; margin-bottom:14px;"></div>
+    <div class="field" style="display:flex; gap:8px; align-items:flex-end;">
+      <div style="flex:1;"><label>Novo responsável</label><input id="f-resp-novo" type="text" placeholder="Nome"></div>
+      <button class="btn btn-sm" id="f-resp-add">Adicionar</button>
+    </div>
+    <div class="modal-actions"><button class="btn btn-ghost" id="f-resp-close">Fechar</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   CONSTANTES
+============================================================ */
+const STORAGE_KEY = 'advice-hub-sistema-v1';
+const ETAPAS = ["Backlog", "Desenvolvimento | Doing", "Testes | Code Review", "Homologação | Staging", "Em Produção"];
+const ETAPA_CLASSE = { "Backlog":"backlog", "Desenvolvimento | Doing":"dev", "Testes | Code Review":"teste", "Homologação | Staging":"homolog", "Em Produção":"deploy" };
+const DEFAULT_RESPONSAVEIS = ["Elde","Guga","Augusto","Tomás","Rômulo"];
+const DIAS_PADRAO_SPRINT = 5;
+const ULTIMA_ETAPA = ETAPAS[ETAPAS.length - 1];
+const SPRINT_ANCHOR = new Date(2026, 7, 18); // terça 18/08/2026 = sprint 1
+const PRAZO_PROJETO_PADRAO = "2027-03-01";
+const NOME_PROJETO_PADRAO = "Sistema Advice HUB";
+
+/* ============================================================
+   SEED — dados extraídos da planilha original, pra não perder nada
+============================================================ */
+function slug(s){ return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,''); }
+
+const SEED_EIXOS = [
+  { id:'gestao', nome:'Gestão', dataInicio:'2026-01-01', dataEntrega:'2026-10-30' },
+  { id:'operacao', nome:'Operação', dataInicio:'2026-11-01', dataEntrega:'2027-02-23' },
+  { id:'cliente', nome:'Cliente', dataInicio:'2026-01-01', dataEntrega:'2026-11-30' },
+];
+
+const SEED_MODULOS_RAW = [
+  ['Gestão de Contratos','gestao','2026-01-01','2026-09-01'],
+  ['Agenda | Gestor de Tarefas','gestao','2026-01-01','2026-09-29'],
+  ['Financeiro | Cobrança','gestao','2026-01-01','2026-09-01'],
+  ['Relatórios Automáticos','operacao','2026-11-01','2027-02-22'],
+  ['Controle Internos','operacao','2026-11-01','2027-01-30'],
+  ['Setor Fiscal','operacao','2026-11-01','2027-01-30'],
+  ['Setor Contábil','operacao','2026-11-01', null],
+  ['Folha de Pagamento','operacao','2026-11-01','2026-12-30'],
+  ['Serviços Legais e Paralegais','operacao','2026-11-01','2026-12-30'],
+  ['Advice Academy','operacao','2026-11-01','2027-02-25'],
+  ['Atendimento','cliente','2026-01-01','2026-10-30'],
+  ['Advice ONE','cliente','2026-01-01','2026-09-01'],
+  ['Portal do Cliente','cliente','2026-01-01','2026-11-29'],
+];
+const SEED_MODULOS = SEED_MODULOS_RAW.map(([nome,eixoId,ini,fim]) => ({ id:slug(nome), nome, eixoId, dataInicio:ini, dataEntrega:fim }));
+
+const SEED_COMPONENTES_RAW = [
+  ['Gestão de Contratos', ['Cadastro de Contratos','Gerenciar Contrato','Empresas','Grupos de Faturamento','Importar CSV']],
+  ['Agenda | Gestor de Tarefas', ['Controle de fechamento contábil por processos','Agenda de obrigações fiscais','Agenda de obrigações contábeis','Agenda de obrigações de folha de pagamento (FOPAG)','Controle de recebimento de documentos contábeis (protocolo)']],
+  ['Financeiro | Cobrança', ['Folha de Pagamento','Ordem de Serviço','Serviços Adicionais','Fechamento','Contas a Receber','Inadimplência','Boletos','Notas Fiscais','Conciliação Bancária','Relatórios','Acordos de Quitação','Régua de Cobrança','Parametrização NFS-e','Retenção | NFS-e','Defaults Financeiros','Índices de Reajustes']],
+  ['Relatórios Automáticos', ['Envio automático de relatórios mensais','Templates padronizados','Histórico de entregas','Analytics de leitura pelo cliente']],
+  ['Controle Internos', ['Mapeamento de processos','Fluxos automatizados','Gestão de indicadores','Auditoria e trilha de revisão']],
+  ['Setor Fiscal', ['Geração e validação de SPED','Conferências automatizadas','Painel de obrigações','Cruzamentos fiscais automatizados']],
+  ['Setor Contábil', ['Recebimento de Documentos','Importação e Integração','Conciliação','Fechamento e Entrega']],
+  ['Folha de Pagamento', ['Processamento de folha','Integração e-Social','Integração GFIP','Portal do colaborador do cliente','Cálculos','Eventos','Relatórios']],
+  ['Serviços Legais e Paralegais', ['Certidões','Parcelamentos','Alvarás','Alterações contratuais','Robôs e automações (CNPJ, Junta Comercial, SEFAZ Estadual e Prefeituras)']],
+  ['Advice Academy', ['Conteúdos','Trilhas de Aprendizagem','Avaliações','Certificações','Gestão de Aprendizado']],
+  ['Atendimento', ['Solicitações','Atendimentos','Comunicação','Ocorrências','Satisfação']],
+  ['Advice ONE', ['Dashboard Analítico','Situação Cadastral','Situação Fiscal','CNDs','CADIN','PAF','PAD','Certificados Digitais','Caixa Postal','DCTFweb','Faturamento','Backoffice']],
+  ['Portal do Cliente', ['Repositório | Cloud','Documentos por cliente','Documentos por área','Etiquetagem e metadados','Controle de acesso','Relatórios Contábeis Assinados','Pasta de Documentos | Procuradoria','Pasta de Documentos | Legais e Paralegais','Pasta de Documentos | Certidões e Declarações']],
+];
+let SEED_COMPONENTES = [];
+let _compCounter = 1;
+SEED_COMPONENTES_RAW.forEach(([moduloNome, comps]) => {
+  const moduloId = slug(moduloNome);
+  comps.forEach(nome => {
+    SEED_COMPONENTES.push({ id: 'c' + (_compCounter++), nome, moduloId });
+  });
+});
+
+const SEED_TAREFAS_RAW = [
+  ['RPA captura Inscrição Municipal Varginha','2026-08-13','2026-08-25','Rômulo','Em Produção','Média'],
+  ['RPA captura Inscrição Municipal Lauro de Freitas','2026-08-13','2026-08-25','Rômulo','Backlog','Média'],
+  ['RPA captura Inscrição Municipal Feira de Santana','2026-08-13','2026-08-18','Rômulo','Backlog','Média'],
+  ['RPA captura Inscrição Municipal São Miguel dos Milagres','2026-08-13','2026-08-25','Rômulo','Backlog','Média'],
+  ['Sistema de notificação de status','2026-08-13','2026-10-06','Tomás','Backlog','Média'],
+  ['Avaliar a possibilidade de integrar DJE - Domicílio Judiciário Eletrônico','2026-08-13','2026-08-18','Rômulo','Backlog','Média'],
+  ['Disponibilizar informação/explicação para quando não for possível baixar uma certidão','2026-08-13','2026-10-06','Tomás','Backlog','Média'],
+  ['Adicionar bloqueio de criação de empresa já existente','2026-08-13','2026-10-06','Tomás','Backlog','Média'],
+  ['Ajustes em situação fiscal quando houver parcelamentos','2026-08-13','2026-08-18','Tomás','Backlog','Média'],
+  ['Adicionar pendências da caixa econômica','2026-08-13','2026-10-20','Tomás','Backlog','Média'],
+  ['Adicionar envio em lote e unitário em todas as telas','2026-08-13','2026-08-25','Tomás','Backlog','Média'],
+  ['Criar rascunho do 360','2026-08-13','2026-08-25','Tomás','Backlog','Média'],
+  ['Criar novo módulo de gestão do Advice ONE','2026-08-13','2026-10-13','Tomás','Backlog','Média'],
+  ['Passar o resto dos endpoints do Advice ONE para o HUB','2026-08-13','2026-08-18','Tomás','Backlog','Média'],
+  ['Criar opção de enviar a pendência de CND por email','2026-08-13','2026-10-20','Tomás','Backlog','Média'],
+  ['Trocar visualização de sliders na tela de caixa postal','2026-08-13','2026-10-20','Tomás','Backlog','Média'],
+  ['Adicionar download de certificado na tela de certificados','2026-08-13','2026-08-18','Tomás','Backlog','Média'],
+  ['Criar filtro de empresas por tipo de tributação','2026-08-13','2026-10-27','Tomás','Backlog','Média'],
+  ['Adicionar módulo de parcelamentos','2026-08-13','2026-08-18','Tomás','Desenvolvimento | Doing','Média'],
+  ['Migrar UI/UX do financeiro para as telas do Advice ONE','2026-08-13','2026-10-13','Tomás','Desenvolvimento | Doing','Média'],
+];
+const SEED_TAREFAS = SEED_TAREFAS_RAW.map(([titulo,ini,fim,resp,etapa,prior], idx) => ({
+  id: 't' + (idx+1), titulo, componenteId: null, dataInicio: ini, dataEntrega: fim,
+  responsavel: resp, etapa, prioridade: prior
+}));
+
+function generateDefaultSprints(){
+  const sprints = [];
+  let d = new Date(SPRINT_ANCHOR);
+  for (let i=1; i<=30; i++){
+    sprints.push({ num:i, data: d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0') });
+    d.setDate(d.getDate()+7);
+  }
+  return sprints;
+}
+
+// Tarefas de demonstração — pedidas pelo Guga pra testar o gráfico "Progresso por Eixo".
+// Título começa com "Tarefa" de propósito, pra serem fáceis de identificar e apagar depois.
+const DEMO_TASKS_RAW = [
+  // Eixo Gestão — bem avançado
+  ['Tarefa 1 (exemplo)','c1','2026-08-11','2026-08-18','Elde','Em Produção','Média'],
+  ['Tarefa 2 (exemplo)','c1','2026-08-18','2026-08-25','Elde','Em Produção','Média'],
+  ['Tarefa 3 (exemplo)','c2','2026-08-18','2026-08-25','Guga','Homologação | Staging','Alta'],
+  ['Tarefa 4 (exemplo)','c6','2026-08-25','2026-09-01','Augusto','Testes | Code Review','Média'],
+  ['Tarefa 5 (exemplo)','c7','2026-09-01','2026-09-08','Elde','Backlog','Baixa'],
+  // Eixo Operação — no início
+  ['Tarefa 6 (exemplo)','c27','2026-11-03','2026-11-10','Tomás','Backlog','Média'],
+  ['Tarefa 7 (exemplo)','c28','2026-11-03','2026-11-10','Tomás','Backlog','Média'],
+  ['Tarefa 8 (exemplo)','c31','2026-11-10','2026-11-17','Rômulo','Desenvolvimento | Doing','Alta'],
+  ['Tarefa 9 (exemplo)','c32','2026-11-10','2026-11-17','Rômulo','Backlog','Baixa'],
+  // Eixo Cliente — misto
+  ['Tarefa 10 (exemplo)','c60','2026-08-18','2026-08-25','Guga','Em Produção','Média'],
+  ['Tarefa 11 (exemplo)','c61','2026-08-25','2026-09-01','Guga','Testes | Code Review','Média'],
+  ['Tarefa 12 (exemplo)','c65','2026-08-25','2026-09-08','Tomás','Desenvolvimento | Doing','Alta'],
+  ['Tarefa 13 (exemplo)','c66','2026-09-01','2026-09-15','Tomás','Backlog','Média'],
+  ['Tarefa 14 (exemplo)','c67','2026-09-08','2026-09-15','Rômulo','Backlog','Baixa'],
+];
+const DEMO_TASKS = DEMO_TASKS_RAW.map(([titulo,compId,ini,fim,resp,etapa,prior], idx) => ({
+  id: 'demo-' + (idx+1), titulo, componenteId: compId, dataInicio: ini, dataEntrega: fim,
+  responsavel: resp, etapa, prioridade: prior
+}));
+
+function seedState() {
+  return {
+    eixos: SEED_EIXOS, modulos: SEED_MODULOS, componentes: SEED_COMPONENTES, tarefas: SEED_TAREFAS,
+    responsaveis: [...DEFAULT_RESPONSAVEIS], sprints: generateDefaultSprints(),
+    projeto: { nome: NOME_PROJETO_PADRAO, prazo: PRAZO_PROJETO_PADRAO }, _demoAdded:false
+  };
+}
+
+// Migrações — garantem que dados salvos em versões anteriores do sistema continuem funcionando
+function runMigrations(state){
+  let changed = false;
+  if (!state.projeto) {
+    state.projeto = { nome: NOME_PROJETO_PADRAO, prazo: PRAZO_PROJETO_PADRAO };
+    changed = true;
+  }
+  if (!state.responsaveis) {
+    const usados = [...new Set(state.tarefas.map(t=>t.responsavel))];
+    state.responsaveis = [...new Set([...DEFAULT_RESPONSAVEIS, ...usados])];
+    changed = true;
+  }
+  if (!state.sprints) { state.sprints = generateDefaultSprints(); changed = true; }
+  state.tarefas.forEach(t => { if (t.etapa === 'Implantação | Deploy') { t.etapa = 'Em Produção'; changed = true; } });
+  if (!state._demoAdded) {
+    state.tarefas = state.tarefas.concat(DEMO_TASKS);
+    state._demoAdded = true;
+    changed = true;
+  }
+  state.componentes.forEach(c => { if (c.parentId === undefined) { c.parentId = null; changed = true; } });
+  if (!state._v3Contabil) {
+    const modContabil = state.modulos.find(m => m.nome === 'Setor Contábil');
+    if (modContabil) {
+      const findComp = (nome) => state.componentes.find(c => c.moduloId === modContabil.id && c.nome === nome);
+      const addChild = (parentComp, nome) => {
+        if (!parentComp) return;
+        state.componentes.push({ id: 'c-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,7), nome, moduloId: modContabil.id, parentId: parentComp.id });
+      };
+      const recebimento = findComp('Recebimento de Documentos');
+      ['Recebimento de documentos pelo ONVIO e e-mail','Arquiva os documentos nas pastas do cliente','Faz a importação dos arquivos no Domínio Sistemas'].forEach(n=>addChild(recebimento,n));
+      const importacao = findComp('Importação e Integração');
+      ['Integrar Folha','Integrar Fiscal','Integrar | Importar Financeiro'].forEach(n=>addChild(importacao,n));
+      const conciliacao = findComp('Conciliação');
+      ['Bancos','Clientes','Fornecedores','Impostos','Imobilizado','Patrimônio Líquido'].forEach(n=>addChild(conciliacao,n));
+      const fechamento = findComp('Fechamento e Entrega');
+      ['IRPJ | CSLL','LALUR','Balancete','ECD','ECF'].forEach(n=>addChild(fechamento,n));
+      if (!findComp('Painel de Acompanhamento')) {
+        state.componentes.push({ id:'c-painel-'+Date.now().toString(36), nome:'Painel de Acompanhamento', moduloId: modContabil.id, parentId:null });
+      }
+    }
+    if (!state.modulos.find(m => m.id === 'automacoes-contabeis-fiscais')) {
+      state.modulos.push({ id:'automacoes-contabeis-fiscais', nome:'Automações Contábeis e Fiscais', eixoId:'operacao', dataInicio:null, dataEntrega:null });
+      const automacoes = [
+        'Automação do LALUR integrada ao Portal do Cliente',
+        'Automação dos demonstrativos contábeis (Balanço, DRE, DMPL, DFC etc.)',
+        'Automação da declaração de faturamento de todos os clientes',
+        'Automação da apuração do Simples Nacional',
+        'Automação para elaboração do contrato social na abertura de empresas',
+        'Automação para consulta de processos da procuradoria na JUCEB',
+        'Automação para envio da TFF aos clientes',
+        'Conciliação de extrato de cartão de crédito',
+        'Automação para disponibilizar certidões do Advice ONE via ONVIO',
+        'Automação do relatório de pendências do Advice ONE',
+      ];
+      automacoes.forEach(n => state.componentes.push({ id:'c-auto-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,7), nome:n, moduloId:'automacoes-contabeis-fiscais', parentId:null }));
+    }
+    state._v3Contabil = true;
+    changed = true;
+  }
+  return { state, changed };
+}
+
+/* ============================================================
+   ESTADO
+============================================================ */
+let STATE = null;
+let TASK_FILTERS = { componente:'', responsavel:'', etapa:'', sprint:'', busca:'' };
+let ARCH_OPEN = {}; // eixoId -> bool
+
+async function loadState() {
+  let loaded = null;
+  try {
+    const res = await window.storage.get(STORAGE_KEY, true);
+    if (res && res.value) loaded = JSON.parse(res.value);
+  } catch(e) {}
+  if (!loaded) loaded = seedState();
+  const { state, changed } = runMigrations(loaded);
+  STATE = state;
+  if (changed) await saveState();
+}
+async function saveState() {
+  try { await window.storage.set(STORAGE_KEY, JSON.stringify(STATE), true); }
+  catch(e) { console.error('Falha ao salvar', e); showToast('Erro ao salvar — tente novamente'); }
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2200);
+}
+
+/* ============================================================
+   HELPERS DE DATA
+============================================================ */
+function parseDate(s){ if(!s) return null; const [y,m,d] = s.split('-').map(Number); return new Date(y, m-1, d); }
+function fmtDate(s){ const d = parseDate(s); if(!d) return '—'; return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+String(d.getFullYear()).slice(2); }
+function todayStr(){ const d = new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function isPast(dateStr){ if(!dateStr) return false; return parseDate(dateStr) < parseDate(todayStr()); }
+
+function sprintInfo(dataEntregaStr) {
+  if (!dataEntregaStr) return { num: null, label: '—', data: null };
+  const sprints = [...(STATE ? STATE.sprints : generateDefaultSprints())].sort((a,b)=>a.data.localeCompare(b.data));
+  const match = sprints.find(s => s.data >= dataEntregaStr);
+  if (match) return { num: match.num, label: 'Sprint ' + match.num, data: match.data };
+  return { num: null, label: 'A definir', data: null };
+}
+
+function diasEntreDatas(inicio, fim){
+  if (!inicio || !fim) return null;
+  return Math.round((parseDate(fim) - parseDate(inicio)) / 86400000);
+}
+
+/* ============================================================
+   DERIVADOS
+============================================================ */
+function taskStatus(t){ return t.etapa === ULTIMA_ETAPA ? 'Concluída' : 'Em Desenvolvimento'; }
+
+function componenteOf(id){ return STATE.componentes.find(c=>c.id===id); }
+function moduloOf(id){ return STATE.modulos.find(m=>m.id===id); }
+function eixoOf(id){ return STATE.eixos.find(e=>e.id===id); }
+
+function tasksOfComponente(compId){ return STATE.tarefas.filter(t => t.componenteId === compId); }
+function componentesOfModulo(modId){ return STATE.componentes.filter(c => c.moduloId === modId); }
+function childrenOf(compId){ return STATE.componentes.filter(c => (c.parentId||null) === compId); }
+function hasChildren(compId){ return childrenOf(compId).length > 0; }
+function descendantsOf(compId){
+  const kids = childrenOf(compId);
+  return kids.concat(kids.flatMap(k=>descendantsOf(k.id)));
+}
+function allTasksUnderComponente(compId){
+  const own = tasksOfComponente(compId);
+  const fromKids = childrenOf(compId).flatMap(k=>allTasksUnderComponente(k.id));
+  return own.concat(fromKids);
+}
+function numeroDoComponente(compId){
+  const comp = componenteOf(compId);
+  if (!comp) return '';
+  const siblings = STATE.componentes.filter(c => c.moduloId===comp.moduloId && (c.parentId||null)===(comp.parentId||null));
+  const idx = siblings.findIndex(c=>c.id===compId) + 1;
+  return comp.parentId ? (numeroDoComponente(comp.parentId) + '.' + idx) : String(idx);
+}
+function modulosOfEixo(eixoId){ return STATE.modulos.filter(m => m.eixoId === eixoId); }
+function tasksOfModulo(modId){
+  const compIds = new Set(componentesOfModulo(modId).map(c=>c.id));
+  return STATE.tarefas.filter(t => compIds.has(t.componenteId));
+}
+function componentesOfEixo(eixoId){
+  const modIds = new Set(modulosOfEixo(eixoId).map(m=>m.id));
+  return STATE.componentes.filter(c => modIds.has(c.moduloId));
+}
+function tasksOfEixo(eixoId){
+  const modIds = new Set(modulosOfEixo(eixoId).map(m=>m.id));
+  const compIds = new Set(STATE.componentes.filter(c=>modIds.has(c.moduloId)).map(c=>c.id));
+  return STATE.tarefas.filter(t => compIds.has(t.componenteId));
+}
+
+function pctConcluido(tasks){
+  if (tasks.length === 0) return null;
+  const done = tasks.filter(t => taskStatus(t) === 'Concluída').length;
+  return Math.round((done / tasks.length) * 100);
+}
+
+function componenteDatasCalculadas(compId){
+  const tasks = allTasksUnderComponente(compId);
+  if (tasks.length === 0) return { inicio:null, entrega:null };
+  const inicios = tasks.map(t=>t.dataInicio).filter(Boolean);
+  const entregas = tasks.map(t=>t.dataEntrega).filter(Boolean);
+  const inicio = inicios.length ? inicios.reduce((a,b)=> a < b ? a : b) : null;
+  const entrega = entregas.length ? entregas.reduce((a,b)=> a > b ? a : b) : null;
+  return { inicio, entrega };
+}
+
+function validacaoComponente(comp){
+  const { entrega } = componenteDatasCalculadas(comp.id);
+  if (!entrega) return { status:'semdata', label: hasChildren(comp.id) ? 'Sem tarefas nos subitens' : 'Sem tarefas' };
+  if (comp.parentId) {
+    const pai = componenteOf(comp.parentId);
+    if (!pai) return { status:'ok', label:'OK' };
+    const paiCalc = componenteDatasCalculadas(pai.id);
+    if (!paiCalc.entrega) return { status:'ok', label:'OK' };
+    if (entrega > paiCalc.entrega) return { status:'invalido', label:'Prazo inválido' };
+    return { status:'ok', label:'OK' };
+  }
+  const mod = moduloOf(comp.moduloId);
+  if (!mod || !mod.dataEntrega) return { status:'semdata', label:'Módulo sem meta' };
+  if (entrega > mod.dataEntrega) return { status:'invalido', label:'Prazo inválido' };
+  return { status:'ok', label:'OK' };
+}
+function validacaoModulo(mod){
+  if (!mod.dataEntrega) return { status:'semdata', label:'Sem meta' };
+  const eixo = eixoOf(mod.eixoId);
+  if (!eixo || !eixo.dataEntrega) return { status:'semdata', label:'Eixo sem meta' };
+  if (mod.dataEntrega > eixo.dataEntrega) return { status:'invalido', label:'Prazo inválido' };
+  return { status:'ok', label:'OK' };
+}
+function validacaoEixo(eixo){
+  if (!eixo.dataEntrega) return { status:'semdata', label:'Sem meta' };
+  if (eixo.dataEntrega > STATE.projeto.prazo) return { status:'invalido', label:'Prazo inválido' };
+  return { status:'ok', label:'OK' };
+}
+
+/* ============================================================
+   RENDER — DASHBOARD
+============================================================ */
+function renderDashboard(){
+  const allTasks = STATE.tarefas;
+  const pctGeral = pctConcluido(allTasks);
+  const entregasDatas = allTasks.map(t=>t.dataEntrega).filter(Boolean);
+  const dataCalculadaProjeto = entregasDatas.length ? entregasDatas.reduce((a,b)=> a>b?a:b) : null;
+  const estourouProjeto = dataCalculadaProjeto && dataCalculadaProjeto > STATE.projeto.prazo;
+
+  const atrasadas = allTasks.filter(t => isPast(t.dataEntrega) && taskStatus(t) !== 'Concluída');
+  const semComponente = allTasks.filter(t => !t.componenteId);
+  const compsSemTarefaCount = STATE.componentes.filter(c => !hasChildren(c.id) && tasksOfComponente(c.id).length === 0).length;
+
+  const kpis = [
+    { label:'% Concluído (geral)', value: (pctGeral===null?'—':pctGeral+'%'), cls: pctGeral>=70?'accent':(pctGeral>=30?'':'warn') },
+    { label:'Prazo do Projeto', value: fmtDate(STATE.projeto.prazo), sub: dataCalculadaProjeto ? ('projeção: '+fmtDate(dataCalculadaProjeto)) : 'sem tarefas ainda', cls: estourouProjeto?'danger':'' },
+    { label:'Tarefas Atrasadas', value: atrasadas.length, cls: atrasadas.length>0?'danger':'accent' },
+    { label:'Tarefa sem componente', value: semComponente.length, cls: semComponente.length>0?'warn':'accent' },
+    { label:'Componentes sem Tarefas', value: compsSemTarefaCount, cls: compsSemTarefaCount>0?'warn':'accent' },
+  ];
+  document.getElementById('topKpis').innerHTML = kpis.map(k => `
+    <div class="card">
+      <div class="kpi-label">${k.label}</div>
+      <div class="kpi-value ${k.cls||''}">${k.value}</div>
+      ${k.sub ? `<div class="kpi-sub">${k.sub}</div>` : ''}
+    </div>
+  `).join('');
+
+  // Eixo cards
+  document.getElementById('eixoCards').innerHTML = STATE.eixos.map(eixo => {
+    const tasks = tasksOfEixo(eixo.id);
+    const pct = pctConcluido(tasks);
+    const val = validacaoEixo(eixo);
+    const badgeCls = val.status === 'invalido' ? 'estourado' : (val.status==='semdata' ? 'indef' : 'ok');
+    const fillCls = pct===null ? '' : (pct < 30 ? 'danger' : (pct < 70 ? 'warn' : ''));
+    return `
+      <div class="card eixo-card">
+        <div class="eixo-head">
+          <div class="eixo-name">${eixo.nome}</div>
+          <span class="badge ${badgeCls}">${val.label}</span>
+        </div>
+        <div class="progress-bar"><div class="progress-fill ${fillCls}" style="width:${pct||0}%"></div></div>
+        <div class="meta-row">
+          <span>${pct===null?'sem tarefas':pct+'% concluído'}</span>
+          <span>meta: ${fmtDate(eixo.dataEntrega)}</span>
+        </div>
+        <div class="meta-stack">
+          <div class="row"><span>Módulos</span><span>${modulosOfEixo(eixo.id).length}</span></div>
+          <div class="row"><span>Componentes</span><span>${componentesOfEixo(eixo.id).length}</span></div>
+          <div class="row"><span>Tarefas</span><span>${tasks.length}</span></div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  // Funil por etapa
+  const maxFunil = Math.max(1, ...ETAPAS.map(e => allTasks.filter(t=>t.etapa===e).length));
+  document.getElementById('funilChart').innerHTML = ETAPAS.map(e => {
+    const n = allTasks.filter(t=>t.etapa===e).length;
+    const pct = Math.round((n/maxFunil)*100);
+    return `<div class="barrow wide"><div class="label">${e}</div><div class="track"><div class="fill" style="width:${pct}%"></div></div><div class="n">${n}</div></div>`;
+  }).join('');
+
+  // Carga por sprint (próximas 8 a partir de hoje)
+  let hojeSprint = sprintInfo(todayStr()).num;
+  if (hojeSprint === null) hojeSprint = (STATE.sprints.length ? Math.max(...STATE.sprints.map(s=>s.num)) : 0) + 1;
+  const sprintCounts = {};
+  allTasks.forEach(t => { const s = sprintInfo(t.dataEntrega).num; if (s) sprintCounts[s] = (sprintCounts[s]||0)+1; });
+  const sprintDateByNum = {};
+  STATE.sprints.forEach(s => sprintDateByNum[s.num] = s.data);
+  const sprintRange = [];
+  for (let i=0; i<8; i++) sprintRange.push(hojeSprint + i);
+  const maxSprint = Math.max(1, ...sprintRange.map(s => sprintCounts[s]||0));
+  document.getElementById('sprintChart').innerHTML = sprintRange.map(s => {
+    const n = sprintCounts[s] || 0;
+    const pct = Math.round((n/maxSprint)*100);
+    const hot = n >= 5;
+    const dataLabel = sprintDateByNum[s] ? ' · ' + fmtDate(sprintDateByNum[s]) : '';
+    return `<div class="barrow"><div class="label">Sprint ${s}${dataLabel}</div><div class="track"><div class="fill ${hot?'hot':''}" style="width:${pct}%"></div></div><div class="n">${n}</div></div>`;
+  }).join('');
+
+  // Carga por responsável
+  const resps = {};
+  allTasks.forEach(t => { if (taskStatus(t)!=='Concluída') resps[t.responsavel] = (resps[t.responsavel]||0)+1; });
+  const respEntries = Object.entries(resps).sort((a,b)=>b[1]-a[1]);
+  const maxResp = Math.max(1, ...respEntries.map(e=>e[1]));
+  document.getElementById('respChart').innerHTML = respEntries.length ? respEntries.map(([nome,n]) => {
+    const pct = Math.round((n/maxResp)*100);
+    return `<div class="barrow"><div class="label">${nome}</div><div class="track"><div class="fill" style="width:${pct}%"></div></div><div class="n">${n}</div></div>`;
+  }).join('') : '<div class="empty-hint">Sem tarefas ativas</div>';
+
+  // Exceções
+  document.getElementById('excAtrasadas').innerHTML = atrasadas.length ? atrasadas.slice(0,8).map(t => `
+    <div class="exc-item"><div><div class="t">${t.titulo}</div><div class="m">Entrega: ${fmtDate(t.dataEntrega)} · ${t.responsavel}</div></div></div>
+  `).join('') : '<div class="exc-empty">Nenhuma tarefa atrasada 🎉</div>';
+
+  const foraPadrao = allTasks.filter(t => {
+    const dias = diasEntreDatas(t.dataInicio, t.dataEntrega);
+    return dias !== null && dias > DIAS_PADRAO_SPRINT && taskStatus(t) !== 'Concluída';
+  }).sort((a,b) => diasEntreDatas(b.dataInicio,b.dataEntrega) - diasEntreDatas(a.dataInicio,a.dataEntrega));
+  document.getElementById('excForaPadrao').innerHTML = foraPadrao.length ? foraPadrao.slice(0,8).map(t => `
+    <div class="exc-item"><div><div class="t">${t.titulo}</div><div class="m">${diasEntreDatas(t.dataInicio,t.dataEntrega)} dias · ${t.responsavel}</div></div></div>
+  `).join('') : '<div class="exc-empty">Nenhuma tarefa fora do padrão</div>';
+
+  const prioAlta = allTasks.filter(t => t.prioridade==='Alta' && t.etapa==='Backlog');
+  document.getElementById('excPrioridadeAlta').innerHTML = prioAlta.length ? prioAlta.slice(0,8).map(t => `
+    <div class="exc-item"><div><div class="t">${t.titulo}</div><div class="m">${t.responsavel} · meta ${fmtDate(t.dataEntrega)}</div></div></div>
+  `).join('') : '<div class="exc-empty">Nada de prioridade alta parado</div>';
+}
+
+/* ============================================================
+   RENDER — ARQUITETURA
+============================================================ */
+function renderComponenteRows(allComps, parentId, depth){
+  const list = allComps.filter(c => (c.parentId||null) === parentId);
+  return list.map(comp => {
+    const num = numeroDoComponente(comp.id);
+    const { inicio, entrega } = componenteDatasCalculadas(comp.id);
+    const valComp = validacaoComponente(comp);
+    const nTasks = allTasksUnderComponente(comp.id).length;
+    const kids = childrenOf(comp.id);
+    const subInfo = kids.length ? ` · ${kids.length} subitem${kids.length===1?'':'s'}` : '';
+    let row = `
+      <tr>
+        <td class="tbl-name" style="padding-left:${12+depth*18}px;" title="${comp.nome}">${num}. ${comp.nome} <span style="color:var(--text-faint); font-weight:400;">(${nTasks} tarefas${subInfo})</span></td>
+        <td>${fmtDate(inicio)}</td>
+        <td>${fmtDate(entrega)}</td>
+        <td><span class="pill ${valComp.status}">${valComp.label}</span></td>
+        <td class="tbl-actions">
+          <button class="icon-btn" onclick="openComponenteModal('${comp.id}')">✎</button>
+        </td>
+      </tr>`;
+    row += renderComponenteRows(allComps, comp.id, depth+1);
+    return row;
+  }).join('');
+}
+
+function renderArquitetura(){
+  const html = STATE.eixos.map(eixo => {
+    const isOpen = ARCH_OPEN[eixo.id] !== false; // default open
+    const mods = modulosOfEixo(eixo.id);
+    const valEixo = validacaoEixo(eixo);
+    const modsHtml = mods.map(mod => {
+      const comps = componentesOfModulo(mod.id);
+      const valMod = validacaoModulo(mod);
+      const compRows = renderComponenteRows(comps, null, 0);
+      return `
+        <div style="margin: 10px 0 4px 18px; padding: 12px; background: var(--panel-2); border: 1px solid var(--line); border-radius: 10px;">
+          <div style="display:grid; grid-template-columns: 1fr 100px 100px 130px 30px; align-items:center; gap:10px; margin-bottom:8px;">
+            <div style="font-weight:700; font-size:13.5px;">Módulo | ${mod.nome}</div>
+            <div style="font-size:11px; color:var(--text-dim);">${fmtDate(mod.dataInicio)}</div>
+            <div style="font-size:11px; color:var(--text-dim);">${fmtDate(mod.dataEntrega)}</div>
+            <div><span class="pill ${valMod.status}">${valMod.label}</span></div>
+            <button class="icon-btn" onclick="openModuloModal('${mod.id}')">✎</button>
+          </div>
+          ${comps.length ? `<table><colgroup><col style="width:46%"><col style="width:16%"><col style="width:16%"><col style="width:16%"><col style="width:6%"></colgroup><thead><tr><th>Componente</th><th>Início (calc.)</th><th>Entrega (calc.)</th><th>Cronograma</th><th></th></tr></thead><tbody>${compRows}</tbody></table>` : '<div class="empty-hint">Nenhum componente cadastrado neste módulo</div>'}
+        </div>`;
+    }).join('');
+
+    return `
+      <div class="card arch-group">
+        <div class="arch-eixo-header" onclick="toggleEixo('${eixo.id}')">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span class="chev ${isOpen?'open':''}">▶</span>
+            <span class="name">${eixo.nome}</span>
+            <span class="pill ${valEixo.status}">${valEixo.label}</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:10px;">
+            <span style="font-size:11.5px; color:var(--text-dim);">meta: ${fmtDate(eixo.dataInicio)} — ${fmtDate(eixo.dataEntrega)}</span>
+            <button class="icon-btn" onclick="event.stopPropagation(); openEixoModal('${eixo.id}')">✎</button>
+          </div>
+        </div>
+        ${isOpen && mods.length ? `<div style="display:grid; grid-template-columns: 1fr 100px 100px 130px 30px; gap:10px; padding: 4px 12px 0 30px; font-size:10px; text-transform:uppercase; letter-spacing:.04em; color:var(--text-faint);"><div></div><div>Início</div><div>Entrega</div><div>Cronograma</div><div></div></div>` : ''}
+        ${isOpen ? modsHtml : ''}
+      </div>
+    `;
+  }).join('');
+  document.getElementById('archTree').innerHTML = html || '<div class="empty-hint">Nenhum Eixo cadastrado ainda</div>';
+}
+function toggleEixo(id){ ARCH_OPEN[id] = !(ARCH_OPEN[id] !== false); renderArquitetura(); }
+
+/* ============================================================
+   RENDER — TAREFAS
+============================================================ */
+function renderTaskFilters(){
+  const respSet = [...new Set(STATE.tarefas.map(t=>t.responsavel))].sort();
+  // só componentes que têm ao menos 1 tarefa vinculada — evita listar os 85 da arquitetura inteira
+  const compIdsUsados = new Set(STATE.tarefas.map(t=>t.componenteId).filter(Boolean));
+  const compsUsados = STATE.componentes.filter(c=>compIdsUsados.has(c.id)).sort((a,b)=>a.nome.localeCompare(b.nome));
+  // só sprints que têm ao menos 1 tarefa
+  const sprintNumsUsados = new Set(STATE.tarefas.map(t=>sprintInfo(t.dataEntrega).num).filter(n=>n!==null));
+  const sprintsUsados = [...STATE.sprints].filter(s=>sprintNumsUsados.has(s.num)).sort((a,b)=>a.num-b.num);
+
+  document.getElementById('taskFilters').innerHTML = `
+    <input type="text" id="fltBusca" placeholder="Buscar tarefa..." value="${TASK_FILTERS.busca}">
+    <select id="fltComponente"><option value="">Componentes usados</option><option value="__sem__" ${TASK_FILTERS.componente==='__sem__'?'selected':''}>— Sem componente —</option>${compsUsados.map(c=>`<option value="${c.id}" ${TASK_FILTERS.componente===c.id?'selected':''}>${c.nome}</option>`).join('')}</select>
+    <select id="fltResp"><option value="">Todos os Responsáveis</option>${respSet.map(r=>`<option ${TASK_FILTERS.responsavel===r?'selected':''}>${r}</option>`).join('')}</select>
+    <select id="fltEtapa"><option value="">Todas as Etapas</option>${ETAPAS.map(e=>`<option ${TASK_FILTERS.etapa===e?'selected':''}>${e}</option>`).join('')}</select>
+    <select id="fltSprint"><option value="">Todas as Sprints</option>${sprintsUsados.map(s=>`<option value="${s.num}" ${String(TASK_FILTERS.sprint)===String(s.num)?'selected':''}>Sprint ${s.num} (${fmtDate(s.data)})</option>`).join('')}</select>
+  `;
+  document.getElementById('fltBusca').addEventListener('input', e => { TASK_FILTERS.busca = e.target.value; renderTarefas(); });
+  document.getElementById('fltComponente').addEventListener('change', e => { TASK_FILTERS.componente = e.target.value; renderTarefas(); });
+  document.getElementById('fltResp').addEventListener('change', e => { TASK_FILTERS.responsavel = e.target.value; renderTarefas(); });
+  document.getElementById('fltEtapa').addEventListener('change', e => { TASK_FILTERS.etapa = e.target.value; renderTarefas(); });
+  document.getElementById('fltSprint').addEventListener('change', e => { TASK_FILTERS.sprint = e.target.value; renderTarefas(); });
+}
+
+function renderTarefas(){
+  let tasks = [...STATE.tarefas];
+  if (TASK_FILTERS.busca) tasks = tasks.filter(t => t.titulo.toLowerCase().includes(TASK_FILTERS.busca.toLowerCase()));
+  if (TASK_FILTERS.componente === '__sem__') tasks = tasks.filter(t => !t.componenteId);
+  else if (TASK_FILTERS.componente) tasks = tasks.filter(t => t.componenteId === TASK_FILTERS.componente);
+  if (TASK_FILTERS.responsavel) tasks = tasks.filter(t => t.responsavel === TASK_FILTERS.responsavel);
+  if (TASK_FILTERS.etapa) tasks = tasks.filter(t => t.etapa === TASK_FILTERS.etapa);
+  if (TASK_FILTERS.sprint) tasks = tasks.filter(t => String(sprintInfo(t.dataEntrega).num) === String(TASK_FILTERS.sprint));
+  tasks.sort((a,b) => {
+    const aAtr = isPast(a.dataEntrega) && taskStatus(a) !== 'Concluída';
+    const bAtr = isPast(b.dataEntrega) && taskStatus(b) !== 'Concluída';
+    if (aAtr !== bAtr) return aAtr ? -1 : 1;
+    if (aAtr && bAtr) return (a.dataEntrega||'').localeCompare(b.dataEntrega||''); // mais atrasada primeiro
+    const da = diasEntreDatas(a.dataInicio, a.dataEntrega);
+    const db = diasEntreDatas(b.dataInicio, b.dataEntrega);
+    const daVal = da===null ? -1 : da;
+    const dbVal = db===null ? -1 : db;
+    if (daVal !== dbVal) return dbVal - daVal; // maior número de dias primeiro
+    return (a.dataEntrega||'').localeCompare(b.dataEntrega||'');
+  });
+
+  document.getElementById('tasksBody').innerHTML = tasks.length ? tasks.map(t => {
+    const comp = componenteOf(t.componenteId);
+    const sprint = sprintInfo(t.dataEntrega);
+    const atrasada = isPast(t.dataEntrega) && taskStatus(t) !== 'Concluída';
+    const priorCls = t.prioridade === 'Alta' ? 'prior-alta' : (t.prioridade === 'Média' ? 'prior-media' : 'prior-baixa');
+    const dias = diasEntreDatas(t.dataInicio, t.dataEntrega);
+    const diasExtra = dias !== null && dias > DIAS_PADRAO_SPRINT;
+    return `
+      <tr class="${atrasada?'row-atrasada':''} ${!comp?'row-sem-comp':''}">
+        <td class="tbl-name" title="${t.titulo}">${t.titulo}</td>
+        <td title="${comp ? comp.nome : ''}">${comp ? comp.nome : '<span style="color:var(--warn);">sem componente</span>'}</td>
+        <td>${t.responsavel}</td>
+        <td>${fmtDate(t.dataInicio)}</td>
+        <td><span class="data-cell">${fmtDate(t.dataEntrega)}${atrasada?' <span class="atraso-dot">●</span>':''}</span></td>
+        <td style="${diasExtra?'color:var(--warn); font-weight:700;':''}">${dias===null?'—':dias+'d'}${diasExtra?' ⚠':''}</td>
+        <td>${sprint.label}</td>
+        <td><select class="task-etapa-select ${ETAPA_CLASSE[t.etapa]}" onchange="updateTaskEtapa('${t.id}', this.value)">${ETAPAS.map(e=>`<option value="${e}" ${e===t.etapa?'selected':''}>${e}</option>`).join('')}</select></td>
+        <td class="${priorCls}">${t.prioridade}</td>
+        <td class="tbl-actions"><button class="icon-btn" onclick="openTarefaModal('${t.id}')">✎</button></td>
+      </tr>`;
+  }).join('') : '<tr><td colspan="10"><div class="empty-hint">Nenhuma tarefa encontrada</div></td></tr>';
+}
+
+async function updateTaskEtapa(id, novaEtapa){
+  const t = STATE.tarefas.find(x=>x.id===id);
+  if (!t) return;
+  t.etapa = novaEtapa;
+  await saveState(); renderAll(); showToast('Etapa atualizada');
+}
+
+/* ============================================================
+   MODAIS — EIXO
+============================================================ */
+let editingEixoId = null;
+function openEixoModal(id){
+  editingEixoId = id;
+  const eixo = id ? eixoOf(id) : null;
+  document.getElementById('eixoModalTitle').textContent = eixo ? 'Editar Eixo' : 'Novo Eixo';
+  document.getElementById('f-eixo-nome').value = eixo ? eixo.nome : '';
+  document.getElementById('f-eixo-inicio').value = eixo ? (eixo.dataInicio||'') : '';
+  document.getElementById('f-eixo-entrega').value = eixo ? (eixo.dataEntrega||'') : '';
+  document.getElementById('f-eixo-del').style.display = eixo ? 'inline-block' : 'none';
+  document.getElementById('overlayEixo').classList.add('open');
+}
+document.getElementById('btnAddEixo').addEventListener('click', ()=>openEixoModal(null));
+document.getElementById('f-eixo-cancel').addEventListener('click', ()=>document.getElementById('overlayEixo').classList.remove('open'));
+document.getElementById('f-eixo-save').addEventListener('click', async ()=>{
+  const nome = document.getElementById('f-eixo-nome').value.trim();
+  if (!nome) return;
+  const inicio = document.getElementById('f-eixo-inicio').value || null;
+  const entrega = document.getElementById('f-eixo-entrega').value || null;
+  if (editingEixoId) {
+    const eixo = eixoOf(editingEixoId);
+    eixo.nome = nome; eixo.dataInicio = inicio; eixo.dataEntrega = entrega;
+  } else {
+    STATE.eixos.push({ id: slug(nome)+'-'+Date.now().toString(36), nome, dataInicio: inicio, dataEntrega: entrega });
+  }
+  await saveState(); renderAll(); document.getElementById('overlayEixo').classList.remove('open'); showToast('Eixo salvo');
+});
+document.getElementById('f-eixo-del').addEventListener('click', async ()=>{
+  if (!editingEixoId) return;
+  if (modulosOfEixo(editingEixoId).length > 0) { showToast('Mova ou apague os Módulos deste Eixo primeiro'); return; }
+  STATE.eixos = STATE.eixos.filter(e=>e.id!==editingEixoId);
+  await saveState(); renderAll(); document.getElementById('overlayEixo').classList.remove('open'); showToast('Eixo excluído');
+});
+
+/* ============================================================
+   MODAIS — MÓDULO
+============================================================ */
+let editingModuloId = null;
+function openModuloModal(id){
+  editingModuloId = id;
+  const mod = id ? moduloOf(id) : null;
+  document.getElementById('moduloModalTitle').textContent = mod ? 'Editar Módulo' : 'Novo Módulo';
+  document.getElementById('f-modulo-nome').value = mod ? mod.nome : '';
+  document.getElementById('f-modulo-eixo').innerHTML = STATE.eixos.map(e=>`<option value="${e.id}">${e.nome}</option>`).join('');
+  document.getElementById('f-modulo-eixo').value = mod ? mod.eixoId : (STATE.eixos[0] ? STATE.eixos[0].id : '');
+  document.getElementById('f-modulo-inicio').value = mod ? (mod.dataInicio||'') : '';
+  document.getElementById('f-modulo-entrega').value = mod ? (mod.dataEntrega||'') : '';
+  document.getElementById('f-modulo-del').style.display = mod ? 'inline-block' : 'none';
+  document.getElementById('overlayModulo').classList.add('open');
+}
+document.getElementById('btnAddModulo').addEventListener('click', ()=>openModuloModal(null));
+document.getElementById('f-modulo-cancel').addEventListener('click', ()=>document.getElementById('overlayModulo').classList.remove('open'));
+document.getElementById('f-modulo-save').addEventListener('click', async ()=>{
+  const nome = document.getElementById('f-modulo-nome').value.trim();
+  if (!nome) return;
+  const eixoId = document.getElementById('f-modulo-eixo').value;
+  const inicio = document.getElementById('f-modulo-inicio').value || null;
+  const entrega = document.getElementById('f-modulo-entrega').value || null;
+  if (editingModuloId) {
+    const mod = moduloOf(editingModuloId);
+    mod.nome = nome; mod.eixoId = eixoId; mod.dataInicio = inicio; mod.dataEntrega = entrega;
+  } else {
+    STATE.modulos.push({ id: slug(nome)+'-'+Date.now().toString(36), nome, eixoId, dataInicio: inicio, dataEntrega: entrega });
+  }
+  await saveState(); renderAll(); document.getElementById('overlayModulo').classList.remove('open'); showToast('Módulo salvo');
+});
+document.getElementById('f-modulo-del').addEventListener('click', async ()=>{
+  if (!editingModuloId) return;
+  if (componentesOfModulo(editingModuloId).length > 0) { showToast('Mova ou apague os Componentes deste Módulo primeiro'); return; }
+  STATE.modulos = STATE.modulos.filter(m=>m.id!==editingModuloId);
+  await saveState(); renderAll(); document.getElementById('overlayModulo').classList.remove('open'); showToast('Módulo excluído');
+});
+
+/* ============================================================
+   MODAIS — COMPONENTE
+============================================================ */
+let editingComponenteId = null;
+function refreshPaiOptions(){
+  const moduloId = document.getElementById('f-componente-modulo').value;
+  const excluidos = new Set(editingComponenteId ? [editingComponenteId, ...descendantsOf(editingComponenteId).map(c=>c.id)] : []);
+  const candidatos = componentesOfModulo(moduloId).filter(c => !excluidos.has(c.id));
+  const paiSelect = document.getElementById('f-componente-pai');
+  const atual = paiSelect.value;
+  paiSelect.innerHTML = '<option value="">— Nenhum (componente raiz) —</option>' +
+    candidatos.map(c => `<option value="${c.id}">${numeroDoComponente(c.id)}. ${c.nome}</option>`).join('');
+  paiSelect.value = candidatos.find(c=>c.id===atual) ? atual : '';
+}
+function openComponenteModal(id, moduloIdPreselect){
+  editingComponenteId = id;
+  const comp = id ? componenteOf(id) : null;
+  document.getElementById('componenteModalTitle').textContent = comp ? 'Editar Componente' : 'Novo Componente';
+  document.getElementById('f-componente-nome').value = comp ? comp.nome : '';
+  document.getElementById('f-componente-modulo').innerHTML = STATE.modulos.map(m=>`<option value="${m.id}">${m.nome}</option>`).join('');
+  document.getElementById('f-componente-modulo').value = comp ? comp.moduloId : (moduloIdPreselect || (STATE.modulos[0] ? STATE.modulos[0].id : ''));
+  refreshPaiOptions();
+  document.getElementById('f-componente-pai').value = comp && comp.parentId ? comp.parentId : '';
+  document.getElementById('f-componente-del').style.display = comp ? 'inline-block' : 'none';
+  document.getElementById('overlayComponente').classList.add('open');
+}
+document.getElementById('f-componente-modulo').addEventListener('change', refreshPaiOptions);
+document.getElementById('btnAddComponente').addEventListener('click', ()=>openComponenteModal(null));
+document.getElementById('f-componente-cancel').addEventListener('click', ()=>document.getElementById('overlayComponente').classList.remove('open'));
+document.getElementById('f-componente-save').addEventListener('click', async ()=>{
+  const nome = document.getElementById('f-componente-nome').value.trim();
+  if (!nome) return;
+  const moduloId = document.getElementById('f-componente-modulo').value;
+  const parentId = document.getElementById('f-componente-pai').value || null;
+  if (editingComponenteId) {
+    const comp = componenteOf(editingComponenteId);
+    comp.nome = nome; comp.moduloId = moduloId; comp.parentId = parentId;
+  } else {
+    STATE.componentes.push({ id: 'c-'+Date.now().toString(36), nome, moduloId, parentId });
+  }
+  await saveState(); renderAll(); document.getElementById('overlayComponente').classList.remove('open'); showToast('Componente salvo');
+});
+document.getElementById('f-componente-del').addEventListener('click', async ()=>{
+  if (!editingComponenteId) return;
+  if (tasksOfComponente(editingComponenteId).length > 0) { showToast('Mova ou apague as Tarefas deste Componente primeiro'); return; }
+  if (hasChildren(editingComponenteId)) { showToast('Mova ou apague os Subitens deste Componente primeiro'); return; }
+  STATE.componentes = STATE.componentes.filter(c=>c.id!==editingComponenteId);
+  await saveState(); renderAll(); document.getElementById('overlayComponente').classList.remove('open'); showToast('Componente excluído');
+});
+
+/* ============================================================
+   MODAIS — TAREFA
+============================================================ */
+let editingTarefaId = null;
+function checkDiasAviso(){
+  const inicio = document.getElementById('f-tarefa-inicio').value;
+  const entrega = document.getElementById('f-tarefa-entrega').value;
+  const aviso = document.getElementById('f-tarefa-dias-aviso');
+  const dias = diasEntreDatas(inicio, entrega);
+  if (dias !== null && dias > DIAS_PADRAO_SPRINT) {
+    aviso.textContent = `⚠ Esse intervalo é de ${dias} dias — acima do padrão de ${DIAS_PADRAO_SPRINT} dias entre sprints.`;
+    aviso.style.display = 'block';
+  } else {
+    aviso.style.display = 'none';
+  }
+}
+document.getElementById('f-tarefa-inicio').addEventListener('change', checkDiasAviso);
+document.getElementById('f-tarefa-entrega').addEventListener('change', checkDiasAviso);
+
+function openTarefaModal(id){
+  editingTarefaId = id;
+  const t = id ? STATE.tarefas.find(x=>x.id===id) : null;
+  document.getElementById('tarefaModalTitle').textContent = t ? 'Editar Tarefa' : 'Nova Tarefa';
+  document.getElementById('f-tarefa-titulo').value = t ? t.titulo : '';
+  const compSelect = document.getElementById('f-tarefa-componente');
+  compSelect.innerHTML = '<option value="">— Sem componente —</option>' + STATE.modulos.map(mod => {
+    const comps = componentesOfModulo(mod.id).filter(c => !hasChildren(c.id)); // só folhas recebem Tarefa
+    if (!comps.length) return '';
+    return `<optgroup label="${mod.nome}">${comps.map(c=>`<option value="${c.id}">${numeroDoComponente(c.id)}. ${c.nome}</option>`).join('')}</optgroup>`;
+  }).join('');
+  compSelect.value = t ? (t.componenteId||'') : '';
+  document.getElementById('f-tarefa-inicio').value = t ? (t.dataInicio||'') : todayStr();
+  const entregaSelect = document.getElementById('f-tarefa-entrega');
+  const sprintsOrdenadas = [...STATE.sprints].sort((a,b)=>a.data.localeCompare(b.data));
+  entregaSelect.innerHTML = sprintsOrdenadas.map(s => `<option value="${s.data}">Sprint ${s.num} · ${fmtDate(s.data)}</option>`).join('');
+  if (t && t.dataEntrega && !sprintsOrdenadas.find(s=>s.data===t.dataEntrega)) {
+    entregaSelect.innerHTML = `<option value="${t.dataEntrega}">${fmtDate(t.dataEntrega)} (fora do calendário de sprints)</option>` + entregaSelect.innerHTML;
+  }
+  const primeiraData = sprintsOrdenadas.length ? sprintsOrdenadas[0].data : todayStr();
+  if (!sprintsOrdenadas.length) entregaSelect.innerHTML = `<option value="${primeiraData}">${fmtDate(primeiraData)} (nenhuma sprint cadastrada)</option>`;
+  entregaSelect.value = t ? (t.dataEntrega || primeiraData) : primeiraData;
+  checkDiasAviso();
+  const respSelect = document.getElementById('f-tarefa-responsavel');
+  respSelect.innerHTML = STATE.responsaveis.map(r=>`<option>${r}</option>`).join('');
+  respSelect.value = t ? t.responsavel : STATE.responsaveis[0];
+  document.getElementById('f-tarefa-prioridade').value = t ? t.prioridade : 'Média';
+  document.getElementById('f-tarefa-etapa').value = t ? t.etapa : 'Backlog';
+  document.getElementById('f-tarefa-del').style.display = t ? 'inline-block' : 'none';
+  document.getElementById('overlayTarefa').classList.add('open');
+}
+document.getElementById('btnAddTarefa').addEventListener('click', ()=>openTarefaModal(null));
+document.getElementById('f-tarefa-cancel').addEventListener('click', ()=>document.getElementById('overlayTarefa').classList.remove('open'));
+document.getElementById('f-tarefa-save').addEventListener('click', async ()=>{
+  const titulo = document.getElementById('f-tarefa-titulo').value.trim();
+  if (!titulo) return;
+  const data = {
+    titulo,
+    componenteId: document.getElementById('f-tarefa-componente').value || null,
+    dataInicio: document.getElementById('f-tarefa-inicio').value || null,
+    dataEntrega: document.getElementById('f-tarefa-entrega').value || null,
+    responsavel: document.getElementById('f-tarefa-responsavel').value,
+    prioridade: document.getElementById('f-tarefa-prioridade').value,
+    etapa: document.getElementById('f-tarefa-etapa').value,
+  };
+  if (editingTarefaId) {
+    const t = STATE.tarefas.find(x=>x.id===editingTarefaId);
+    Object.assign(t, data);
+  } else {
+    STATE.tarefas.push({ id: 't-'+Date.now().toString(36), ...data });
+  }
+  await saveState(); renderAll(); document.getElementById('overlayTarefa').classList.remove('open'); showToast('Tarefa salva');
+});
+document.getElementById('f-tarefa-del').addEventListener('click', async ()=>{
+  if (!editingTarefaId) return;
+  STATE.tarefas = STATE.tarefas.filter(t=>t.id!==editingTarefaId);
+  await saveState(); renderAll(); document.getElementById('overlayTarefa').classList.remove('open'); showToast('Tarefa excluída');
+});
+
+/* ============================================================
+   MODAL — PROJETO
+============================================================ */
+document.getElementById('btnEditProjeto').addEventListener('click', ()=>{
+  document.getElementById('f-projeto-nome').value = STATE.projeto.nome;
+  document.getElementById('f-projeto-prazo').value = STATE.projeto.prazo || '';
+  document.getElementById('overlayProjeto').classList.add('open');
+});
+document.getElementById('f-projeto-cancel').addEventListener('click', ()=>document.getElementById('overlayProjeto').classList.remove('open'));
+document.getElementById('f-projeto-save').addEventListener('click', async ()=>{
+  const nome = document.getElementById('f-projeto-nome').value.trim();
+  const prazo = document.getElementById('f-projeto-prazo').value || null;
+  if (!nome || !prazo) { showToast('Preencha nome e prazo'); return; }
+  STATE.projeto.nome = nome;
+  STATE.projeto.prazo = prazo;
+  await saveState(); renderAll(); document.getElementById('overlayProjeto').classList.remove('open'); showToast('Projeto atualizado — cronogramas recalculados');
+});
+
+/* ============================================================
+   RESPONSÁVEIS
+============================================================ */
+function renderRespList(){
+  document.getElementById('respList').innerHTML = STATE.responsaveis.map(r => {
+    const nTasks = STATE.tarefas.filter(t=>t.responsavel===r).length;
+    return `
+      <div style="display:flex; justify-content:space-between; align-items:center; background:var(--panel-2); border:1px solid var(--line); border-radius:7px; padding:8px 12px;">
+        <span>${r} <span style="color:var(--text-faint); font-size:11px;">(${nTasks} tarefas)</span></span>
+        <button class="icon-btn" onclick="removeResp('${r}')">✕</button>
+      </div>`;
+  }).join('');
+}
+async function removeResp(nome){
+  const nTasks = STATE.tarefas.filter(t=>t.responsavel===nome).length;
+  if (nTasks > 0) { showToast('Reatribua as tarefas de '+nome+' antes de remover'); return; }
+  STATE.responsaveis = STATE.responsaveis.filter(r=>r!==nome);
+  await saveState(); renderRespList(); renderTaskFilters(); showToast('Responsável removido');
+}
+document.getElementById('btnManageResp').addEventListener('click', ()=>{
+  renderRespList();
+  document.getElementById('overlayResp').classList.add('open');
+});
+document.getElementById('f-resp-close').addEventListener('click', ()=>document.getElementById('overlayResp').classList.remove('open'));
+document.getElementById('f-resp-add').addEventListener('click', async ()=>{
+  const input = document.getElementById('f-resp-novo');
+  const nome = input.value.trim();
+  if (!nome) return;
+  if (STATE.responsaveis.includes(nome)) { showToast('Esse nome já existe'); return; }
+  STATE.responsaveis.push(nome);
+  await saveState(); input.value=''; renderRespList(); renderTaskFilters(); showToast('Responsável adicionado');
+});
+
+/* ============================================================
+   SPRINTS
+============================================================ */
+function renderSprints(){
+  const sprints = [...STATE.sprints].sort((a,b)=>a.num-b.num);
+  document.getElementById('sprintsBody').innerHTML = sprints.map(s => {
+    const n = STATE.tarefas.filter(t => sprintInfo(t.dataEntrega).num === s.num).length;
+    return `
+      <tr>
+        <td class="tbl-name">Sprint ${s.num}</td>
+        <td><input type="date" value="${s.data}" onchange="updateSprintDate(${s.num}, this.value)" style="background:var(--panel-2); border:1px solid var(--line); color:var(--text); border-radius:6px; padding:5px 8px; font-family:inherit; height:28px; box-sizing:border-box;"></td>
+        <td>${n}</td>
+        <td class="tbl-actions"><button class="icon-btn" onclick="removeSprint(${s.num})">✕</button></td>
+      </tr>`;
+  }).join('');
+}
+async function updateSprintDate(num, novaData){
+  const s = STATE.sprints.find(x=>x.num===num);
+  if (s) s.data = novaData;
+  await saveState(); renderAll(); showToast('Data da sprint atualizada');
+}
+async function removeSprint(num){
+  const n = STATE.tarefas.filter(t => sprintInfo(t.dataEntrega).num === num).length;
+  if (n > 0) { showToast('Existem tarefas nesta sprint — mude a data delas antes de remover'); return; }
+  STATE.sprints = STATE.sprints.filter(s=>s.num!==num);
+  await saveState(); renderSprints(); showToast('Sprint removida');
+}
+document.getElementById('btnAddSprint').addEventListener('click', async ()=>{
+  const sprints = [...STATE.sprints].sort((a,b)=>a.num-b.num);
+  const last = sprints[sprints.length-1];
+  const nextNum = last ? last.num+1 : 1;
+  const nextDate = last ? (() => { const d = parseDate(last.data); d.setDate(d.getDate()+7); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); })() : todayStr();
+  STATE.sprints.push({ num: nextNum, data: nextDate });
+  await saveState(); renderSprints(); showToast('Sprint adicionada');
+});
+
+/* ============================================================
+   TABS
+============================================================ */
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('view-'+tab.dataset.view).classList.add('active');
+  });
+});
+
+/* ============================================================
+   RENDER ALL / INIT
+============================================================ */
+function renderAll(){
+  const totalTasks = STATE.tarefas.length;
+  const doneTasks = STATE.tarefas.filter(t=>taskStatus(t)==='Concluída').length;
+  document.getElementById('headerSub').textContent = `Prazo do projeto: ${fmtDate(STATE.projeto.prazo)} · ${doneTasks}/${totalTasks} tarefas concluídas`;
+  document.getElementById('projTitle').textContent = STATE.projeto.nome;
+  renderDashboard();
+  renderArquitetura();
+  renderTaskFilters();
+  renderTarefas();
+  renderSprints();
+}
+
+(async function init(){
+  await loadState();
+  document.getElementById('loadingMsg').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  renderAll();
+})();
+</script>
+</body>
+</html>
